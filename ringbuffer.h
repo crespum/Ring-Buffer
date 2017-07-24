@@ -1,4 +1,5 @@
-#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 /**
  * @file
@@ -80,9 +81,9 @@ void ring_buffer_queue_arr(ring_buffer_t *buffer, const char *data, ring_buffer_
  * Returns the oldest byte in a ring buffer.
  * @param buffer The buffer from which the data should be returned.
  * @param data A pointer to the location at which the data should be placed.
- * @return 1 if data was returned; 0 otherwise.
+ * @return true if data was returned; false otherwise.
  */
-uint8_t ring_buffer_dequeue(ring_buffer_t *buffer, char *data);
+bool ring_buffer_dequeue(ring_buffer_t *buffer, char *data);
 
 /**
  * Returns the <em>len</em> oldest bytes in a ring buffer.
@@ -98,26 +99,25 @@ ring_buffer_size_t ring_buffer_dequeue_arr(ring_buffer_t *buffer, char *data, ri
  * @param buffer The buffer from which the data should be returned.
  * @param data A pointer to the location at which the data should be placed.
  * @param index The index to peek.
- * @return 1 if data was returned; 0 otherwise.
+ * @return true if data was returned; false otherwise.
  */
-uint8_t ring_buffer_peek(ring_buffer_t *buffer, char *data, ring_buffer_size_t index);
-
+bool ring_buffer_peek(ring_buffer_t *buffer, char *data, ring_buffer_size_t index);
 
 /**
  * Returns whether a ring buffer is empty.
  * @param buffer The buffer for which it should be returned whether it is empty.
- * @return 1 if empty; 0 otherwise.
+ * @return true if empty; false otherwise.
  */
-inline uint8_t ring_buffer_is_empty(ring_buffer_t *buffer) {
+inline bool ring_buffer_is_empty(ring_buffer_t *buffer) {
   return (buffer->head_index == buffer->tail_index);
 }
 
 /**
  * Returns whether a ring buffer is full.
  * @param buffer The buffer for which it should be returned whether it is full.
- * @return 1 if full; 0 otherwise.
+ * @return true if full; false otherwise.
  */
-inline uint8_t ring_buffer_is_full(ring_buffer_t *buffer) {
+inline bool ring_buffer_is_full(ring_buffer_t *buffer) {
   return ((buffer->head_index - buffer->tail_index) & RING_BUFFER_MASK) == RING_BUFFER_MASK;
 }
 
