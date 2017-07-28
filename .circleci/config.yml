@@ -1,0 +1,11 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/Ring-Buffer
+    docker:
+      - image: gcc:6.4.0
+    steps:
+      - checkout
+      - run:
+          name: Running tests
+          command: make
