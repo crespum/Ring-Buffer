@@ -1,74 +1,58 @@
 #include "ringbuffer.h"
+#include <string.h>
 
-/**
- * @file
- * Implementation of ring buffer functions.
- */
-
-void ring_buffer_init(ring_buffer_t *buffer) {
-  buffer->tail_index = 0;
-  buffer->head_index = 0;
+bool ring_buffer_init(ring_buffer_t *rb, ring_buffer_attr_t attr) { 
+    if ((rb != NULL)) {
+        if ((attr.buffer != NULL) && (attr.size_elem > 0)) {
+            /* Check that the size of the ring buffer is a power of 2 */
+            if (((attr.num_elem - 1) & attr.num_elem) == 0) {
+                /* Initialize the ring buffer internal variables */
+                rb->head = 0;
+                rb->tail = 0;
+                rb->buffer = attr.buffer;
+                rb->size_elem = attr.size_elem;
+                rb->num_elem = attr.num_elem;
+ 
+                return true;
+            }
+        }
+    }
+ 
+    return false;
 }
 
-void ring_buffer_queue(ring_buffer_t *buffer, char data) {
-  /* Is buffer full? */
-  if(ring_buffer_is_full(buffer)) {
-    /* Is going to overwrite the oldest byte */
-    /* Increase tail index */
-    buffer->tail_index = ((buffer->tail_index + 1) & RING_BUFFER_MASK);
-  }
+bool ring_buffer_put(ring_buffer_t *rb, const void *data) {
+    if (!ring_buffer_is_full(rb)) {
+        const ring_buffer_size_t offset = (rb->head & (rb->num_elem - 1)) * rb->size_elem;
+        memcpy(&(((uint8_t *) rb->buffer)[offset]), data, rb->size_elem);
+        rb->head++;
+        return true;
+    } else {
+        return false;
+    }
+ }
 
-  /* Place data in buffer */
-  buffer->buffer[buffer->head_index] = data;
-  buffer->head_index = ((buffer->head_index + 1) & RING_BUFFER_MASK);
+bool ring_buffer_get(ring_buffer_t *rb, void *data) { 
+    if (!ring_buffer_is_empty(rb)) {
+        const ring_buffer_size_t offset = (rb->tail & (rb->num_elem - 1)) * rb->size_elem;
+        memcpy(data, &(((uint8_t *) rb->buffer)[offset]), rb->size_elem);
+        rb->tail++;
+        return true;
+    } else {
+        return false;
+    }
 }
 
-void ring_buffer_queue_arr(ring_buffer_t *buffer, const char *data, ring_buffer_size_t size) {
-  /* Add bytes; one by one */
-  ring_buffer_size_t i;
-  for(i = 0; i < size; i++) {
-    ring_buffer_queue(buffer, data[i]);
-  }
+bool ring_buffer_peek(ring_buffer_t *rb, void *data, ring_buffer_size_t index) {
+    if (!ring_buffer_is_empty(rb) && ring_buffer_num_items(rb)>index) {
+        const ring_buffer_size_t offset = (rb->tail + index & (rb->num_elem - 1)) * rb->size_elem;
+        memcpy(data, &(((uint8_t *) rb->buffer)[offset]), rb->size_elem);
+        return true;
+    } else {
+        return false;
+    }
 }
 
-bool ring_buffer_dequeue(ring_buffer_t *buffer, char *data) {
-  if(ring_buffer_is_empty(buffer)) {
-    /* No items */
-    return 0;
-  }
-  
-  *data = buffer->buffer[buffer->tail_index];
-  buffer->tail_index = ((buffer->tail_index + 1) & RING_BUFFER_MASK);
-  return 1;
-}
-
-ring_buffer_size_t ring_buffer_dequeue_arr(ring_buffer_t *buffer, char *data, ring_buffer_size_t len) {
-  if(ring_buffer_is_empty(buffer)) {
-    /* No items */
-    return 0;
-  }
-
-  char *data_ptr = data;
-  ring_buffer_size_t cnt = 0;
-  while((cnt < len) && ring_buffer_dequeue(buffer, data_ptr)) {
-    cnt++;
-    data_ptr++;
-  }
-  return cnt;
-}
-
-bool ring_buffer_peek(ring_buffer_t *buffer, char *data, ring_buffer_size_t index) {
-  if(index >= ring_buffer_num_items(buffer)) {
-    /* No items at index */
-    return 0;
-  }
-  
-  /* Add index to pointer */
-  ring_buffer_size_t data_index = ((buffer->tail_index + index) & RING_BUFFER_MASK);
-  *data = buffer->buffer[data_index];
-  return 1;
-}
-
-extern inline bool ring_buffer_is_empty(ring_buffer_t *buffer);
-extern inline bool ring_buffer_is_full(ring_buffer_t *buffer);
-extern inline uint8_t ring_buffer_num_items(ring_buffer_t *buffer);
+extern inline bool ring_buffer_is_empty(ring_buffer_t *rb);
+extern inline bool ring_buffer_is_full(ring_buffer_t *rb);
+extern inline uint8_t ring_buffer_num_items(ring_buffer_t *rb);

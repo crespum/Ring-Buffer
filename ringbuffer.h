@@ -1,134 +1,108 @@
+#ifndef __RING_BUFFER_H__
+#define __RING_BUFFER_H__
+
 #include <stdint.h>
 #include <stdbool.h>
 
 /**
- * @file
- * Prototypes and structures for the ring buffer module.
- */
-
-#ifndef RINGBUFFER_H
-#define RINGBUFFER_H
-
-/**
- * The size of a ring buffer.
- * Due to the design only <tt> RING_BUFFER_SIZE-1 </tt> items
- * can be contained in the buffer.
- * The buffer size must be a power of two.
-*/
-#define RING_BUFFER_SIZE                128
-#define RING_BUFFER_MAX_NUM_ELEMENTS    RING_BUFFER_SIZE-1
-
-#if (RING_BUFFER_SIZE & (RING_BUFFER_SIZE - 1)) != 0
-#error "RING_BUFFER_SIZE must be a power of two"
-#endif
-
-/**
- * The type which is used to hold the size
- * and the indicies of the buffer.
- * Must be able to fit \c RING_BUFFER_SIZE .
+ * Type used to hold the size and the indexes of the buffer.
  */
 typedef uint8_t ring_buffer_size_t;
 
 /**
- * Used as a modulo operator
- * as <tt> a % b = (a & (b − 1)) </tt>
- * where \c a is a positive index in the buffer and
- * \c b is the (power of two) size of the buffer.
+ * Structure to configure the buffer format (number of elements, size of each
+ * element and pointer to the buffer).
  */
-#define RING_BUFFER_MASK (RING_BUFFER_SIZE-1)
+typedef struct {
+    ring_buffer_size_t size_elem;
+    ring_buffer_size_t num_elem;
+    void *buffer;
+} ring_buffer_attr_t;
 
 /**
- * Simplifies the use of <tt>struct ring_buffer_t</tt>.
+ * Structure which holds a ring buffer (data buffer + metadata).
  */
-typedef struct ring_buffer_t ring_buffer_t;
-
-/**
- * Structure which holds a ring buffer.
- * The buffer contains a buffer array
- * as well as metadata for the ring buffer.
- */
-struct ring_buffer_t {
-  /** Buffer memory. */
-  char buffer[RING_BUFFER_SIZE];
-  /** Index of tail. */
-  ring_buffer_size_t tail_index;
-  /** Index of head. */
-  ring_buffer_size_t head_index;
-};
+typedef struct {
+    void *buffer;
+    ring_buffer_size_t tail;
+    ring_buffer_size_t head;
+    ring_buffer_size_t size_elem;
+    ring_buffer_size_t num_elem;
+} ring_buffer_t;
 
 /**
  * Initializes the ring buffer pointed to by <em>buffer</em>.
  * This function can also be used to empty/reset the buffer.
- * @param buffer The ring buffer to initialize.
+ *
+ * @param rb The ring buffer to initialize.
+ * @param attr The ring buffer attributes.
+ *
+ * @return true if success; false otherwise.
  */
-void ring_buffer_init(ring_buffer_t *buffer);
+bool ring_buffer_init(ring_buffer_t *rb, ring_buffer_attr_t attr);
 
 /**
  * Adds a byte to a ring buffer.
- * @param buffer The buffer in which the data should be placed.
+ *
+ * @param rb The buffer in which the data should be placed.
  * @param data The byte to place.
+ *
+ * @return true if data was queued; false otherwise.
  */
-void ring_buffer_queue(ring_buffer_t *buffer, char data);
-
-/**
- * Adds an array of bytes to a ring buffer.
- * @param buffer The buffer in which the data should be placed.
- * @param data A pointer to the array of bytes to place in the queue.
- * @param size The size of the array.
- */
-void ring_buffer_queue_arr(ring_buffer_t *buffer, const char *data, ring_buffer_size_t size);
+bool ring_buffer_put(ring_buffer_t *rb, const void *data);
 
 /**
  * Returns the oldest byte in a ring buffer.
- * @param buffer The buffer from which the data should be returned.
+ *
+ * @param rb The buffer from which the data should be returned.
  * @param data A pointer to the location at which the data should be placed.
+ *
  * @return true if data was returned; false otherwise.
  */
-bool ring_buffer_dequeue(ring_buffer_t *buffer, char *data);
-
-/**
- * Returns the <em>len</em> oldest bytes in a ring buffer.
- * @param buffer The buffer from which the data should be returned.
- * @param data A pointer to the array at which the data should be placed.
- * @param len The maximum number of bytes to return.
- * @return The number of bytes returned.
- */
-ring_buffer_size_t ring_buffer_dequeue_arr(ring_buffer_t *buffer, char *data, ring_buffer_size_t len);
+bool ring_buffer_get(ring_buffer_t *rb, void *data);
 
 /**
  * Peeks a ring buffer, i.e. returns an element without removing it.
- * @param buffer The buffer from which the data should be returned.
+ *
+ * @param rb The buffer from which the data should be returned.
  * @param data A pointer to the location at which the data should be placed.
  * @param index The index to peek.
+ *
  * @return true if data was returned; false otherwise.
  */
-bool ring_buffer_peek(ring_buffer_t *buffer, char *data, ring_buffer_size_t index);
+bool ring_buffer_peek(ring_buffer_t *rb, void *data, ring_buffer_size_t index);
 
 /**
  * Returns whether a ring buffer is empty.
- * @param buffer The buffer for which it should be returned whether it is empty.
+ *
+ * @param rb The buffer for which it should be returned whether it is empty.
+ *
  * @return true if empty; false otherwise.
  */
-inline bool ring_buffer_is_empty(ring_buffer_t *buffer) {
-  return (buffer->head_index == buffer->tail_index);
+inline bool ring_buffer_is_empty(ring_buffer_t *rb) {
+    return (rb->head - rb->tail) == 0U;
 }
 
 /**
  * Returns whether a ring buffer is full.
- * @param buffer The buffer for which it should be returned whether it is full.
+ *
+ * @param rb The buffer for which it should be returned whether it is full.
+ *
  * @return true if full; false otherwise.
  */
-inline bool ring_buffer_is_full(ring_buffer_t *buffer) {
-  return ((buffer->head_index - buffer->tail_index) & RING_BUFFER_MASK) == RING_BUFFER_MASK;
+inline bool ring_buffer_is_full(ring_buffer_t *rb) {
+    return (rb->head - rb->tail) == rb->num_elem;
 }
 
 /**
  * Returns the number of items in a ring buffer.
- * @param buffer The buffer for which the number of items should be returned.
+ *
+ * @param rb The buffer for which the number of items should be returned.
+ *
  * @return The number of items in the ring buffer.
  */
-inline ring_buffer_size_t ring_buffer_num_items(ring_buffer_t *buffer) {
-  return ((buffer->head_index - buffer->tail_index) & RING_BUFFER_MASK);
+inline ring_buffer_size_t ring_buffer_num_items(ring_buffer_t *rb) {
+    return rb->head - rb->tail;
 }
 
-#endif /* RINGBUFFER_H */
+#endif /* __RING_BUFFER_H__ */
