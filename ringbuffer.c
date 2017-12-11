@@ -23,7 +23,7 @@ bool ring_buffer_init(ring_buffer_t *rb, ring_buffer_attr_t attr) {
 
 bool ring_buffer_put(ring_buffer_t *rb, const void *data) {
     if (!ring_buffer_is_full(rb)) {
-        const ring_buffer_size_t offset = (rb->head & (rb->num_elem - 1)) * rb->size_elem;
+        const uint16_t offset = (rb->head & (rb->num_elem - 1)) * rb->size_elem;
         memcpy(&(((uint8_t *) rb->buffer)[offset]), data, rb->size_elem);
         rb->head++;
         return true;
@@ -34,7 +34,7 @@ bool ring_buffer_put(ring_buffer_t *rb, const void *data) {
 
 bool ring_buffer_get(ring_buffer_t *rb, void *data) { 
     if (!ring_buffer_is_empty(rb)) {
-        const ring_buffer_size_t offset = (rb->tail & (rb->num_elem - 1)) * rb->size_elem;
+        const uint16_t offset = (rb->tail & (rb->num_elem - 1)) * rb->size_elem;
         memcpy(data, &(((uint8_t *) rb->buffer)[offset]), rb->size_elem);
         rb->tail++;
         return true;
@@ -45,7 +45,7 @@ bool ring_buffer_get(ring_buffer_t *rb, void *data) {
 
 bool ring_buffer_peek(ring_buffer_t *rb, void *data, ring_buffer_size_t index) {
     if (!ring_buffer_is_empty(rb) && ring_buffer_num_items(rb)>index) {
-        const ring_buffer_size_t offset = (rb->tail + index & (rb->num_elem - 1)) * rb->size_elem;
+        const uint16_t offset = (rb->tail + index & (rb->num_elem - 1)) * rb->size_elem;
         memcpy(data, &(((uint8_t *) rb->buffer)[offset]), rb->size_elem);
         return true;
     } else {
