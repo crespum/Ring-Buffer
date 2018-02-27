@@ -7,7 +7,7 @@
 /**
  * Type used to hold the size and the indexes of the buffer.
  */
-typedef uint8_t ring_buffer_size_t;
+typedef uint16_t ring_buffer_size_t;
 
 /**
  * Structure to configure the buffer format (number of elements, size of each
