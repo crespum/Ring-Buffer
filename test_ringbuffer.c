@@ -120,6 +120,46 @@ void test_should_DiscardNewElement_when_BufferFull(void) {
     TEST_ASSERT_EQUAL(0, buf_get); // First element would be 1 if the element had been added
 }
 
+void test_should_ReturnRightElement_when_FillBufferEmptyHalfRefill(void) {
+    // Add elements to buffer; one at a time
+    for(buf_put=0 ; buf_put<RING_BUFFER_MAX_NUM_ELEMENTS ; buf_put++)
+        TEST_ASSERT_TRUE(ring_buffer_put(&ring_buffer, &buf_put));
+
+    TEST_ASSERT_EQUAL(RING_BUFFER_MAX_NUM_ELEMENTS, ring_buffer_num_items(&ring_buffer));
+
+    // Read half of the buffer
+    uint8_t i_get;
+    for(i_get=0 ; i_get<RING_BUFFER_MAX_NUM_ELEMENTS/2 ; i_get++) {
+        TEST_ASSERT_TRUE(ring_buffer_get(&ring_buffer, &buf_get));
+        TEST_ASSERT_EQUAL(buf_get, i_get);
+    }
+
+    TEST_ASSERT_EQUAL(RING_BUFFER_MAX_NUM_ELEMENTS/2, ring_buffer_num_items(&ring_buffer));
+
+    // Refill the buffer
+    for(buf_put=0 ; buf_put<RING_BUFFER_MAX_NUM_ELEMENTS/2 ; buf_put++)
+        TEST_ASSERT_TRUE(ring_buffer_put(&ring_buffer, &buf_put));
+
+    TEST_ASSERT_EQUAL(RING_BUFFER_MAX_NUM_ELEMENTS, ring_buffer_num_items(&ring_buffer));
+
+    // Read first half of the buffer
+    i_get = RING_BUFFER_MAX_NUM_ELEMENTS/2;
+    uint8_t i;
+    for(i=0 ; i<RING_BUFFER_MAX_NUM_ELEMENTS/2 ; i++) {
+        TEST_ASSERT_TRUE(ring_buffer_get(&ring_buffer, &buf_get));
+        TEST_ASSERT_EQUAL(buf_get, i_get++);
+    }
+
+    TEST_ASSERT_EQUAL(RING_BUFFER_MAX_NUM_ELEMENTS/2, ring_buffer_num_items(&ring_buffer));
+
+    // Read second half of the buffer
+    for(i_get=0 ; i_get<RING_BUFFER_MAX_NUM_ELEMENTS/2 ; i_get++) {
+        TEST_ASSERT_TRUE(ring_buffer_get(&ring_buffer, &buf_get));
+        TEST_ASSERT_EQUAL(buf_get, i_get);
+    }
+
+    TEST_ASSERT_EQUAL(0, ring_buffer_num_items(&ring_buffer));
+}
 
 int main(void) {
     UNITY_BEGIN();
@@ -139,6 +179,7 @@ int main(void) {
 
     RUN_TEST(test_should_ReturnFirstElement_when_Unqueueing);
     RUN_TEST(test_should_DiscardNewElement_when_BufferFull);
+    RUN_TEST(test_should_ReturnRightElement_when_FillBufferEmptyHalfRefill);
 
     return UNITY_END();
 }
