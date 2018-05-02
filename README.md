@@ -28,4 +28,5 @@ ring_buffer_put(&ring_buffer, &buf_put);
 
 uint8_t buff_get;
 ring_buffer_get(&ring_buffer, &buf_get);
+printf("buff_get = %u", buf_get); // buff_get = 8
 ```
