@@ -56,6 +56,7 @@ bool ring_buffer_peek(ring_buffer_t *rb, void *data, ring_buffer_size_t index) {
 bool ring_buffer_drop(ring_buffer_t *rb) {
     if (!ring_buffer_is_empty(rb)) {
         rb->tail++;
+        return true;
     } else {
         return false;
     }
