@@ -73,6 +73,15 @@ bool ring_buffer_get(ring_buffer_t *rb, void *data);
 bool ring_buffer_peek(ring_buffer_t *rb, void *data, ring_buffer_size_t index);
 
 /**
+ * Removes the first element in the queue from the buffer.
+ *
+ * @param rb The buffer from which the data should be returned.
+ *
+ * @return true the item was dropped; false otherwise.
+ */
+bool ring_buffer_drop(ring_buffer_t *rb);
+
+/**
  * Returns whether a ring buffer is empty.
  *
  * @param rb The buffer for which it should be returned whether it is empty.

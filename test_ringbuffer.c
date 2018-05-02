@@ -96,6 +96,28 @@ void test_should_ReturnCorrectElement_when_BufferPeek(void) {
     TEST_ASSERT_EQUAL(4, buf_get); // Element 4 corresponds to head
 }
 
+void test_should_RemoveFirstElement_when_Dropping(void) {
+    // Add elements to buffer; one at a time
+    for(buf_put=0 ; buf_put<5 ; buf_put++)
+        TEST_ASSERT_TRUE(ring_buffer_put(&ring_buffer, &buf_put));
+
+    TEST_ASSERT_EQUAL(5, ring_buffer_num_items(&ring_buffer));
+
+    TEST_ASSERT_TRUE(ring_buffer_peek(&ring_buffer, &buf_get, 0));
+    TEST_ASSERT_EQUAL(0, buf_get);
+
+    TEST_ASSERT_TRUE(ring_buffer_drop(&ring_buffer)); // Drop 0
+
+    TEST_ASSERT_TRUE(ring_buffer_peek(&ring_buffer, &buf_get, 0));
+    TEST_ASSERT_EQUAL(1, buf_get); // First element is now 1
+
+}
+
+void test_should_ReturnError_when_DroppingEmptyQueue(void) {
+    TEST_ASSERT_EQUAL(0, ring_buffer_num_items(&ring_buffer));
+    TEST_ASSERT_FALSE(ring_buffer_drop(&ring_buffer));
+}
+
 void test_should_ReturnFirstElement_when_Unqueueing(void) {
     // Add elements to buffer; one at a time
     for(buf_put=0 ; buf_put<5 ; buf_put++)
@@ -176,6 +198,9 @@ int main(void) {
     RUN_TEST(test_should_KeepSize_when_BufferPeek);
     RUN_TEST(test_should_ReturnError_when_PeekNonExistingElement);
     RUN_TEST(test_should_ReturnCorrectElement_when_BufferPeek);
+
+    RUN_TEST(test_should_RemoveFirstElement_when_Dropping);
+    RUN_TEST(test_should_ReturnError_when_DroppingEmptyQueue);
 
     RUN_TEST(test_should_ReturnFirstElement_when_Unqueueing);
     RUN_TEST(test_should_DiscardNewElement_when_BufferFull);
