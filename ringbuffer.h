@@ -30,6 +30,10 @@ typedef struct {
     ring_buffer_size_t num_elem;
 } ring_buffer_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initializes the ring buffer pointed to by <em>buffer</em>.
  * This function can also be used to empty/reset the buffer.
@@ -113,5 +117,9 @@ inline bool ring_buffer_is_full(ring_buffer_t *rb) {
 inline ring_buffer_size_t ring_buffer_num_items(ring_buffer_t *rb) {
     return rb->head - rb->tail;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RING_BUFFER_H__ */
